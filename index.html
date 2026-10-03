@@ -884,9 +884,14 @@
       return;
     }
 
-    const activeDate = document.querySelector('.date-chip.active');
+    const dateInputEl = document.getElementById('dateInput');
     const activeTime = document.querySelector('.time-chip.active');
-    const dateLabel = activeDate ? (DAYS[activeDate.dataset.key][currentLang] + ' ' + activeDate.dataset.date) : '—';
+    let dateLabel = '—';
+    if (dateInputEl && dateInputEl.value){
+      const [y, m, d] = dateInputEl.value.split('-').map(Number);
+      const selected = new Date(y, m - 1, d);
+      dateLabel = DAYS[DOW_KEYS[selected.getDay()]][currentLang] + ' ' + d + ' ' + MONTHS[m - 1][currentLang];
+    }
     const timeLabel = activeTime ? activeTime.textContent : '—';
     const code = reservationCode();
 
