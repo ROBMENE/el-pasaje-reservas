@@ -479,6 +479,14 @@
     font-size:.72rem;
     color:#6b6a63;
   }
+  .credit-badge{
+    text-align:center;
+    font-size:.64rem;
+    color:var(--gold-dim);
+    opacity:.6;
+    margin-top:.3rem;
+    letter-spacing:.02em;
+  }
 
   .email-preview{
     display:none;
@@ -628,6 +636,7 @@
         <div class="summary-line"><span id="txtWhen">Cuándo</span><strong id="summaryWhen">Vie 21, 14:30</strong></div>
         <button type="submit" class="confirm-btn" id="confirmBtn">Confirmar reserva</button>
         <p class="micro-note" id="microNote">Se abrirá WhatsApp con la reserva lista para enviar</p>
+        <p class="credit-badge" id="txtCreditBadge">Diseñado por LIMATH &copy; MMXXVI &middot; Todos los derechos reservados</p>
       </div>
 
       <div class="email-preview" id="emailPreview">
@@ -820,6 +829,7 @@
       waPhone: 'Teléfono',
       waNote: 'Nota',
       waSentFrom: 'Enviado desde la web de reservas',
+      creditBadge: 'Diseñado por LIMATH © MMXXVI · Todos los derechos reservados',
       waNotStored: '(Este mensaje no queda guardado en ningún sistema; esta es la única copia.)',
       sendPrefix: 'Reserva',
       whatsappTo: 'Para: WhatsApp',
@@ -865,6 +875,7 @@
       waPhone: 'Phone',
       waNote: 'Note',
       waSentFrom: 'Sent from the reservations page',
+      creditBadge: 'Designed by LIMATH © MMXXVI · All rights reserved',
       waNotStored: '(This message is not stored anywhere; this is the only copy.)',
       sendPrefix: 'Reservation',
       whatsappTo: 'To: WhatsApp',
@@ -971,6 +982,7 @@
     document.getElementById('copyBtn').textContent = t().copy;
     document.title = lang === 'es' ? 'El Pasaje — Reservas' : 'El Pasaje — Reservations';
 
+    document.getElementById('txtCreditBadge').textContent = t().creditBadge;
     microNote.style.color = '';
     microNote.textContent = t().defaultNote;
     summaryParty.textContent = party + ' ' + peopleLabel(party);
