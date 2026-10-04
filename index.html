@@ -164,6 +164,13 @@
     font-size:.88rem;
     color:var(--cream-dim);
   }
+  .fact-link{
+    display:flex;
+    flex-direction:column;
+    text-decoration:none;
+    color:inherit;
+  }
+  .fact-link:hover strong{ color:var(--gold); }
   .fact svg{ flex:none; width:16px; height:16px; margin-top:.15rem; color:var(--gold); }
   .fact strong{ color:var(--cream); font-weight:500; display:block; margin-bottom:.1rem; }
   .open-badge{
@@ -186,7 +193,11 @@
   }
   @media (max-width: 880px){
     .booking{ padding: 2.4rem 1.4rem 3rem; }
-    .profile{ padding: 2.4rem 1.6rem 2rem; }
+    .profile{ padding: 2.4rem 1.6rem 2rem; align-items:center; text-align:center; }
+    .source-tag{ margin:0 auto; }
+    .brand-logo{ margin-left:auto; margin-right:auto; }
+    .restaurant-name{ margin-left:auto; margin-right:auto; }
+    .fact{ justify-content:center; }
   }
 
   .ticket{
@@ -286,6 +297,7 @@
   .date-chip.active .mo{ color:var(--ink); opacity:.75; }
   .date-chip:not(.active):hover{ border-color:var(--gold-dim); }
 
+  .date-field{ position:relative; }
   .date-input{
     width:100%;
     box-sizing:border-box;
@@ -297,13 +309,71 @@
     font-size:.95rem;
     outline:none;
     border-radius:0;
-    color-scheme: dark;
+    text-align:left;
+    cursor:pointer;
+    display:block;
   }
-  .date-input:focus{ border-color:var(--gold); }
-  .closed-day-hint{
-    margin-top:.4rem;
-    font-size:.78rem;
-    color:#d98a91;
+  .date-input:hover, .date-input:focus{ border-color:var(--gold); }
+  .calendar-popup{
+    position:absolute;
+    top:calc(100% + .4rem);
+    left:0;
+    right:0;
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:.9rem;
+    z-index:60;
+    box-shadow:0 12px 28px rgba(0,0,0,0.45);
+  }
+  .calendar-header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:.7rem;
+    font-size:.85rem;
+    color:var(--cream);
+    font-weight:600;
+  }
+  .calendar-header button{
+    width:28px; height:28px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--cream);
+    cursor:pointer;
+    font-size:1rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .calendar-header button:disabled{ opacity:.25; cursor:not-allowed; }
+  .calendar-header button:not(:disabled):hover{ border-color:var(--gold); color:var(--gold); }
+  .calendar-weekdays{
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom:.3rem;
+  }
+  .calendar-weekdays span{
+    text-align:center;
+    font-size:.68rem;
+    color:var(--cream-dim);
+    text-transform:uppercase;
+  }
+  .calendar-days{
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap:.2rem;
+  }
+  .cal-day{
+    aspect-ratio:1;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--cream);
+    font-size:.82rem;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .cal-day:disabled{ color:var(--cream-dim); opacity:.3; cursor:not-allowed; }
+  .cal-day:not(:disabled):hover{ border-color:var(--gold-dim); }
+  .cal-day.active{
+    background:var(--wine);
+    color:var(--ink);
+    font-weight:600;
   }
 
   .time-grid{
@@ -494,7 +564,7 @@
       </div>
       <div class="fact">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>
-        <div><strong>+34 696 71 13 14</strong><span id="txtCallDirect">Llamar directamente</span></div>
+        <div><a href="#" id="callLink" class="fact-link"><strong>+34 696 71 13 14</strong><span id="txtCallDirect">Llamar directamente</span></a></div>
       </div>
     </div>
   </section>
@@ -518,10 +588,18 @@
           </div>
         </div>
 
-        <div class="field-group">
+        <div class="field-group date-field">
           <span class="field-label" id="txtDate">Fecha</span>
-          <input type="date" class="date-input" id="dateInput">
-          <div class="closed-day-hint" id="closedDayHint" style="display:none;"></div>
+          <button type="button" class="date-input" id="dateDisplayBtn" aria-haspopup="true" aria-expanded="false"></button>
+          <div class="calendar-popup" id="calendarPopup" style="display:none;">
+            <div class="calendar-header">
+              <button type="button" id="calPrevMonth" aria-label="Mes anterior">‹</button>
+              <span id="calMonthYear"></span>
+              <button type="button" id="calNextMonth" aria-label="Mes siguiente">›</button>
+            </div>
+            <div class="calendar-weekdays" id="calWeekdays"></div>
+            <div class="calendar-days" id="calDays"></div>
+          </div>
         </div>
 
         <div class="field-group">
@@ -616,32 +694,89 @@
   // Genera los próximos días reales a partir de hoy (no son fechas fijas de ejemplo).
   // Límite de cuánto se puede reservar con antelación (en meses).
   const MAX_MONTHS_AHEAD = 6;
-  const toISODate = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  let selectedDate = new Date();
+  let calendarViewYear = selectedDate.getFullYear();
+  let calendarViewMonth = selectedDate.getMonth();
+  const TODAY = startOfDay(new Date());
+  const MAX_DATE = (() => { const dd = new Date(TODAY); dd.setMonth(dd.getMonth() + MAX_MONTHS_AHEAD); return dd; })();
 
-  function setDateInputBounds(){
-    const input = document.getElementById('dateInput');
-    const today = new Date();
-    input.min = toISODate(today);
-    const max = new Date(today.getFullYear(), today.getMonth() + MAX_MONTHS_AHEAD, today.getDate());
-    input.max = toISODate(max);
-    if (!input.value) input.value = toISODate(today);
+  function renderCalendar(){
+    document.getElementById('calMonthYear').textContent = MONTHS[calendarViewMonth][currentLang] + ' ' + calendarViewYear;
+
+    const weekdaysEl = document.getElementById('calWeekdays');
+    const weekdayOrder = ['mon','tue','wed','thu','fri','sat','sun'];
+    weekdaysEl.innerHTML = weekdayOrder.map(k => '<span>' + DAYS[k][currentLang] + '</span>').join('');
+
+    const daysEl = document.getElementById('calDays');
+    daysEl.innerHTML = '';
+
+    const firstOfMonth = new Date(calendarViewYear, calendarViewMonth, 1);
+    const startOffset = (firstOfMonth.getDay() + 6) % 7;
+    const daysInMonth = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
+
+    for (let i = 0; i < startOffset; i++){
+      daysEl.appendChild(document.createElement('span'));
+    }
+
+    for (let day = 1; day <= daysInMonth; day++){
+      const date = new Date(calendarViewYear, calendarViewMonth, day);
+      const dowKey = DOW_KEYS[date.getDay()];
+      const isPast = date < TODAY;
+      const isBeyondMax = date > MAX_DATE;
+      const isClosedDay = SCHEDULE[dowKey].length === 0;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = day;
+      btn.className = 'cal-day';
+      const disabled = isPast || isBeyondMax || isClosedDay;
+      if (disabled) btn.disabled = true;
+      if (!disabled && date.getTime() === startOfDay(selectedDate).getTime()) btn.classList.add('active');
+      if (!disabled){
+        btn.addEventListener('click', () => selectDate(date));
+      }
+      daysEl.appendChild(btn);
+    }
+
+    document.getElementById('calPrevMonth').disabled = (calendarViewYear === TODAY.getFullYear() && calendarViewMonth === TODAY.getMonth());
+    document.getElementById('calNextMonth').disabled = (calendarViewYear === MAX_DATE.getFullYear() && calendarViewMonth === MAX_DATE.getMonth());
   }
 
-  function onDateChange(){
-    const input = document.getElementById('dateInput');
-    if (!input.value) return;
-    const [y, m, d] = input.value.split('-').map(Number);
-    const selected = new Date(y, m - 1, d);
-    activeDayKey = DOW_KEYS[selected.getDay()];
-    const hint = document.getElementById('closedDayHint');
-    if (SCHEDULE[activeDayKey].length === 0){
-      hint.textContent = t().closedDay;
-      hint.style.display = 'block';
-    } else {
-      hint.style.display = 'none';
-    }
+  function changeMonth(delta){
+    calendarViewMonth += delta;
+    if (calendarViewMonth < 0){ calendarViewMonth = 11; calendarViewYear--; }
+    if (calendarViewMonth > 11){ calendarViewMonth = 0; calendarViewYear++; }
+    renderCalendar();
+  }
+
+  function openCalendar(){
+    calendarViewYear = selectedDate.getFullYear();
+    calendarViewMonth = selectedDate.getMonth();
+    renderCalendar();
+    document.getElementById('calendarPopup').style.display = 'block';
+    document.getElementById('dateDisplayBtn').setAttribute('aria-expanded', 'true');
+  }
+  function closeCalendar(){
+    document.getElementById('calendarPopup').style.display = 'none';
+    document.getElementById('dateDisplayBtn').setAttribute('aria-expanded', 'false');
+  }
+  function toggleCalendar(){
+    const popup = document.getElementById('calendarPopup');
+    if (popup.style.display === 'block') closeCalendar(); else openCalendar();
+  }
+
+  function updateDateDisplay(){
+    const btn = document.getElementById('dateDisplayBtn');
+    btn.textContent = DAYS[DOW_KEYS[selectedDate.getDay()]][currentLang] + ' ' + selectedDate.getDate() + ' ' + MONTHS[selectedDate.getMonth()][currentLang];
+  }
+
+  function selectDate(date){
+    selectedDate = date;
+    activeDayKey = DOW_KEYS[date.getDay()];
+    updateDateDisplay();
     buildTimeSlots();
     updateWhen();
+    closeCalendar();
   }
 
   const I18N = {
@@ -760,14 +895,8 @@
   }
 
   function updateWhen(){
-    const input = document.getElementById('dateInput');
     const activeTime = document.querySelector('.time-chip.active');
-    let dayLabel = '';
-    if (input && input.value){
-      const [y, m, d] = input.value.split('-').map(Number);
-      const selected = new Date(y, m - 1, d);
-      dayLabel = DAYS[DOW_KEYS[selected.getDay()]][currentLang] + ' ' + d + ' ' + MONTHS[m - 1][currentLang];
-    }
+    const dayLabel = DAYS[DOW_KEYS[selectedDate.getDay()]][currentLang] + ' ' + selectedDate.getDate() + ' ' + MONTHS[selectedDate.getMonth()][currentLang];
     const timeLabel = activeTime ? activeTime.textContent : '';
     summaryWhen.textContent = dayLabel + (timeLabel ? ', ' + timeLabel : '');
   }
@@ -846,19 +975,31 @@
     microNote.textContent = t().defaultNote;
     summaryParty.textContent = party + ' ' + peopleLabel(party);
 
-    setDateInputBounds();
-    onDateChange();
+    updateDateDisplay();
+    if (document.getElementById('calendarPopup').style.display === 'block') renderCalendar();
+    buildTimeSlots();
+    updateWhen();
   }
 
   document.getElementById('langEsBtn').addEventListener('click', () => applyLanguage('es'));
   document.getElementById('langEnBtn').addEventListener('click', () => applyLanguage('en'));
-  document.getElementById('dateInput').addEventListener('change', onDateChange);
+  document.getElementById('dateDisplayBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleCalendar(); });
+  document.getElementById('calPrevMonth').addEventListener('click', () => changeMonth(-1));
+  document.getElementById('calNextMonth').addEventListener('click', () => changeMonth(1));
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('calendarPopup');
+    const btn = document.getElementById('dateDisplayBtn');
+    if (popup.style.display === 'block' && !popup.contains(e.target) && e.target !== btn){
+      closeCalendar();
+    }
+  });
 
   applyLanguage('es');
 
   /* -------- Envío por WhatsApp, sin almacenamiento -------- */
   // Número del restaurante en formato internacional, solo dígitos (sin +, espacios ni guiones).
   const RESTAURANT_WHATSAPP = "34696711314"; // ← confirma que este es el número de WhatsApp real
+  document.getElementById('callLink').href = 'tel:+' + RESTAURANT_WHATSAPP;
 
   const form = document.querySelector('.ticket');
   const nameInput = document.getElementById('guestName');
@@ -884,14 +1025,8 @@
       return;
     }
 
-    const dateInputEl = document.getElementById('dateInput');
     const activeTime = document.querySelector('.time-chip.active');
-    let dateLabel = '—';
-    if (dateInputEl && dateInputEl.value){
-      const [y, m, d] = dateInputEl.value.split('-').map(Number);
-      const selected = new Date(y, m - 1, d);
-      dateLabel = DAYS[DOW_KEYS[selected.getDay()]][currentLang] + ' ' + d + ' ' + MONTHS[m - 1][currentLang];
-    }
+    const dateLabel = DAYS[DOW_KEYS[selectedDate.getDay()]][currentLang] + ' ' + selectedDate.getDate() + ' ' + MONTHS[selectedDate.getMonth()][currentLang];
     const timeLabel = activeTime ? activeTime.textContent : '—';
     const code = reservationCode();
 
